@@ -1,0 +1,72 @@
+function [Cg1,Cm1]=inversion(Vg,Vt,g,T,Imax,Wdg,Wdt,P,Px,Py,Pz)
+num=0;
+k=0;
+[~,bb]=size(Vg);
+PPg=Wdg*P;
+PPt=Wdt*P;
+PPxg=Wdg*Px;
+PPxt=Wdt*Px;
+PPyg=Wdg*Py;
+PPyt=Wdt*Py;
+PPzg=Wdg*Pz;
+PPzt=Wdt*Pz;
+Cg0=zeros(bb,1);
+Cm0=zeros(bb,1);
+r0g=Vg'*g;
+r0t=Vt'*T;
+a=0.0001;
+while num<=Imax
+    k=k+1;
+    if k==1
+        p1g=r0g;
+        q1g=Vg*p1g;
+        q11g=PPg*p1g;
+        v1g=(r0g'*r0g)/(q1g'*q1g+q11g'*q11g);
+        q11g=PPg'*q11g;
+        r1g=r0g-v1g*Vg'*q1g-v1g*q11g;
+        Cg1=Cg0+v1g*p1g;
+        p1t=r0t;
+        q1t=Vt*p1t;
+        q11t=PPt*p1t;
+        v1t=(r0t'*r0t)/(q1t'*q1t+q11t'*q11t);
+        q11t=PPt'*q11t;
+        r1t=r0t-v1t*Vt'*q1t-v1t*q11t;
+        Cm1=Cm0+v1t*p1t;
+    else
+        txyzt=cross(PPxg,PPyg,PPzg,Cg1,PPxt,PPyt,PPzt);
+        txyzg=cross(PPxt,PPyt,PPzt,Cm1,PPxg,PPyg,PPzg);
+        u2g=(r1g'*r1g)/(r0g'*r0g);
+        p2g=r1g+u2g*p1g;
+        q1g=Vg*p2g;
+        q11g=PPg*p2g;
+        qxyzg=a*txyzg*p1g;
+        v2g=(r1g'*r1g)/(q1g'*q1g+q11g'*q11g+qxyzg'*qxyzg);
+        Cg2=Cg1+v2g*p2g;
+        q11g=PPg'*q11g;
+        qxyzg=a*txyzg'*qxyzg;
+        r2g=r1g-v2g*Vg'*q1g-v2g*q11g-v2g*qxyzg;
+        r0g=r1g;
+        r1g=r2g;
+        p1g=p2g;
+        Cg1=Cg2;
+        u2t=(r1t'*r1t)/(r0t'*r0t);
+        p2t=r1t+u2t*p1t;
+        q1t=Vt*p2t;
+        q11t=PPt*p2t;
+        qxyzt=a*txyzt*p1t;
+        v2t=(r1t'*r1t)/(q1t'*q1t+q11t'*q11t+qxyzt'*qxyzt);
+        Cm2=Cm1+v2t*p2t;
+        q11t=PPt'*q11t;
+        qxyzt=a*txyzt'*qxyzt;
+        r2t=r1t-v2t*Vt'*q1t-v2t*q11t-v2t*qxyzt;
+        r0t=r1t;
+        r1t=r2t;
+        p1t=p2t;
+        Cm1=Cm2;
+        if(u2g==1&&u2t==1)
+            break;
+        end
+    end
+    num=num+1;
+end
+end
